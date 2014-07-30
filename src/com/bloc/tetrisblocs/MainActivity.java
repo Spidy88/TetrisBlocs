@@ -8,7 +8,6 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.IOnSceneTouchListener;
-import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.SpriteBackground;
 import org.andengine.entity.sprite.Sprite;
@@ -19,8 +18,9 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
-import android.util.Log;
 import android.widget.Toast;
+
+import com.bloc.tetrisblocs.block.Block;
 
 
 public class MainActivity extends SimpleBaseGameActivity {
@@ -31,7 +31,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 	private static final int CAMERA_HEIGHT = BLOCK_SIZE * GRID_HEIGHT;
 	private static final float MOVE_TIMER_THRESHOLD_SECS = 0.5f;
 	private static final float MOVE_TOUCH_THRESHOLD = 50;
-	private static final long TAP_TOUCH_THRESHOLD = 0;
+	private static final long TAP_TOUCH_THRESHOLD_MS = 100;
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private BitmapTextureAtlas mBlockTextureAtlas;
@@ -40,6 +40,8 @@ public class MainActivity extends SimpleBaseGameActivity {
 	
 	private Random mRandom = new Random();
 	private Sprite mCurrentPiece = null;
+	private Block mCurrentBlock = null;
+	private int mCurrentColumn = GRID_WIDTH / 2;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -79,14 +81,17 @@ public class MainActivity extends SimpleBaseGameActivity {
 				} else if ( pSceneTouchEvent.isActionMove() ) {
 					float deltaX = pSceneTouchEvent.getX() - originX;
 					int movement = Math.round(deltaX / MOVE_TOUCH_THRESHOLD);
+					movement = minHorizontalMove(movement);
 					
 					if( mCurrentPiece != null && movement != 0 ) {
-						mCurrentPiece.setPosition(mCurrentPiece.getX() + (BLOCK_SIZE * movement), mCurrentPiece.getY());
 						originX += (movement * MOVE_TOUCH_THRESHOLD); // Move logical origin to prevent large jumps after move
+						
+						mCurrentPiece.setPosition(mCurrentPiece.getX() + (BLOCK_SIZE * movement), mCurrentPiece.getY());
+						mCurrentBlock.setX(mCurrentBlock.getX() + movement);
 					}
 				} else if ( pSceneTouchEvent.isActionUp() ) {
 					float deltaTime = pSceneTouchEvent.getMotionEvent().getEventTime() - startTime;
-					if( deltaTime <= TAP_TOUCH_THRESHOLD ) {
+					if( deltaTime <= TAP_TOUCH_THRESHOLD_MS ) {
 						rotatePiece();
 					}
 				}
@@ -115,6 +120,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 						float gray = 100f / 255f;
 						mCurrentPiece.setColor(gray, gray, gray);
 						mCurrentPiece = null;
+						mCurrentBlock = null;
 					}
 					
 					mSecondsElapsed -= MOVE_TIMER_THRESHOLD_SECS;
@@ -131,27 +137,39 @@ public class MainActivity extends SimpleBaseGameActivity {
 	}
 	
 	private void playNextPiece(Scene scene) {
-		Sprite s = new Sprite(BLOCK_SIZE * (GRID_WIDTH / 2), 0f, mBlockTextureRegion, MainActivity.this.getVertexBufferObjectManager());
+		Sprite s = new Sprite(BLOCK_SIZE * mCurrentColumn, 0f, mBlockTextureRegion, MainActivity.this.getVertexBufferObjectManager());
 		scene.attachChild(s);
 		
+		mCurrentBlock = new Block(mCurrentColumn, 0);
 		mCurrentPiece = s;
 	}
 	
-	private int count = 0;
+	private int minHorizontalMove(int direction) {
+		if( mCurrentBlock == null || direction == 0 ) {
+			return 0;
+		}
+		
+		if( direction < 0 ) {
+			return -Math.min(mCurrentBlock.getX(), Math.abs(direction));
+		} else {
+			return Math.min(GRID_WIDTH - mCurrentBlock.getX() - 1, direction);
+		}
+	}
+	
 	private boolean canMoveDown() {
-		++count;
-		if( count > 13 ) {
-			count = 0;
+		if( mCurrentBlock == null ) {
 			return false;
 		}
-		return true;
+		
+		return mCurrentBlock.getY() < GRID_HEIGHT - 1;
 	}
 	
 	private void movePieceDown() {
 		mCurrentPiece.setPosition(mCurrentPiece.getX(), mCurrentPiece.getY() + BLOCK_SIZE);
+		mCurrentBlock.setY(mCurrentBlock.getY() + 1);
 	}
 	
 	private void rotatePiece() {
-		
+		this.toastOnUIThread("Rotate");
 	}
 }
