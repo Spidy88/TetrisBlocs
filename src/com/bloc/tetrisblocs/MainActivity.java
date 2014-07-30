@@ -88,6 +88,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 						
 						mCurrentPiece.setPosition(mCurrentPiece.getX() + (BLOCK_SIZE * movement), mCurrentPiece.getY());
 						mCurrentBlock.setX(mCurrentBlock.getX() + movement);
+						mCurrentColumn = mCurrentBlock.getX();
 					}
 				} else if ( pSceneTouchEvent.isActionUp() ) {
 					float deltaTime = pSceneTouchEvent.getMotionEvent().getEventTime() - startTime;
