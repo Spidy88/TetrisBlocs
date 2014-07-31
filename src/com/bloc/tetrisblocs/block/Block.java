@@ -21,4 +21,14 @@ public class Block {
 	public void setY(int y) {
 		mY = y;
 	}
+	
+	public int getHorizontalSize() {
+		return 1;
+	}
+	public int getVerticalSize() {
+		return 1;
+	}
+	public boolean[][] getBlockGrid() {
+		return new boolean[][] { { true } };
+	}
 }

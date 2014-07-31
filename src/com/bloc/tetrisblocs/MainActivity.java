@@ -42,6 +42,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 	private Sprite mCurrentPiece = null;
 	private Block mCurrentBlock = null;
 	private int mCurrentColumn = GRID_WIDTH / 2;
+	private boolean[][] mGrid = null;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -65,6 +66,8 @@ public class MainActivity extends SimpleBaseGameActivity {
 
 	@Override
 	protected Scene onCreateScene() {
+		mGrid = new boolean[GRID_HEIGHT][GRID_WIDTH];
+		
 		final Scene scene = new Scene();
 		scene.setBackground(new SpriteBackground(new Sprite(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, mBackgroundTextureRegion, this.getVertexBufferObjectManager())));
 		scene.setTouchAreaBindingOnActionDownEnabled(true);
@@ -117,6 +120,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 						movePieceDown();
 					// If we can't move down, this timer trigger results in our block being "placed"
 					} else {
+						mGrid[mCurrentBlock.getY()][mCurrentBlock.getX()] = true;
 						// Gray it out?
 						float gray = 100f / 255f;
 						mCurrentPiece.setColor(gray, gray, gray);
@@ -162,7 +166,20 @@ public class MainActivity extends SimpleBaseGameActivity {
 			return false;
 		}
 		
-		return mCurrentBlock.getY() < GRID_HEIGHT - 1;
+		if( mCurrentBlock.getY() == GRID_HEIGHT - 1 ) {
+			return false;
+		}
+		
+		boolean[][] blockGrid = mCurrentBlock.getBlockGrid();
+		boolean[] bottomRow = blockGrid[blockGrid.length - 1];
+		
+		for( int col = 0; col < bottomRow.length; ++col ) {
+			if( bottomRow[col] && mGrid[mCurrentBlock.getY() + 1][mCurrentBlock.getX() + col] ) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	private void movePieceDown() {
