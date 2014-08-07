@@ -170,12 +170,13 @@ public class MainActivity extends SimpleBaseGameActivity {
 			return false;
 		}
 		
+		int blockHeight = mCurrentBlock.getVerticalSize();
 		boolean[][] blockGrid = mCurrentBlock.getBlockGrid();
-		boolean[] bottomRow = blockGrid[blockGrid.length - 1];
-		
-		for( int col = 0; col < bottomRow.length; ++col ) {
-			if( bottomRow[col] && mGrid[mCurrentBlock.getY() + 1][mCurrentBlock.getX() + col] ) {
-				return false;
+		for( int row = 0; row < blockGrid.length; ++row ) {
+			for( int col = 0; col < blockGrid[row].length; ++col ) {
+				if( blockGrid[row][col] && mGrid[mCurrentBlock.getY() + 1 - (blockHeight - 1)][mCurrentBlock.getX() + col] ) {
+					return false;
+				}
 			}
 		}
 		
